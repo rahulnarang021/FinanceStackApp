@@ -10,7 +10,7 @@ import UIKit
 class StockListCoordinator: Coordinator {
     var didFinish: (() -> Void)?
 
-    let apiPeriodicIntervalInSeconds = 20
+    let apiPeriodicIntervalInSeconds = 8
     weak var deallocallable: Deinitcallable? // Called on View Denit to remove from from ChildCoordinator
 
     lazy var childCoordinators: [Coordinator] = []
