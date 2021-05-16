@@ -6,39 +6,77 @@
 //
 
 import UIKit
+import RxSwift
+import RxCocoa
 
 class StockDetailViewController: UIViewController, Storyboardable, Deinitcallable {
+    @IBOutlet weak var errorLabel: UILabel!
+    @IBOutlet weak var loadingLabel: UILabel!
+    @IBOutlet weak var loadingView: UIStackView!
+    @IBOutlet weak var tableView: UITableView!
+
+    private let disposeBag = DisposeBag()
+    var viewModel: StockDetailViewModelProtocol!
     var onDeinit: (() -> Void)?
-    @IBOutlet weak var marketNameLabel: UILabel!
-    @IBOutlet weak var exchangeNameLabel: UILabel!
-    @IBOutlet weak var allTimeHighPriceDateLabel: UILabel!
-    @IBOutlet weak var allTimePriceLowLabel: UILabel!
-    @IBOutlet weak var allTimePriceLowDate: UILabel!
-    @IBOutlet weak var marketTimeLabel: UILabel!
-    @IBOutlet weak var allTimeHighPriceLabel: UILabel!
-    @IBOutlet weak var priceValueLabel: UILabel!
-    var viewModel: StockDetailViewModel!
 
     override func viewDidLoad() {
         super.viewDidLoad()
+        self.title = viewModel.title
         doBinding()
+        viewModel.fetchStockDetail()
         // Do any additional setup after loading the view.
     }
 
     func doBinding() {
-        let stockVM = viewModel.stockDetailVM
-        self.title = stockVM.stockName
-        
-        exchangeNameLabel.text = stockVM.exchangeName
-        marketNameLabel.text = stockVM.marketName
-        marketTimeLabel.text = stockVM.marketTime
-        priceValueLabel.text = stockVM.priceValue
+        bindTableViewData()
+        bindHiddenShowViewStates()
+    }
 
-        allTimeHighPriceLabel.text = stockVM.allTimeHighPrice
-        allTimeHighPriceDateLabel.text = stockVM.allTimeHighPriceDate
+    // MARK: - Do TableView Binding
+    private func bindTableViewData() {
+        viewModel.viewStates
+            .map { $0.getViewModel()?.summaryList ?? [] }
+            .asDriver()
+            .drive(tableView.rx.items(cellIdentifier: StockDetailTableViewCell.reusableIdentifier, cellType: StockDetailTableViewCell.self)) {row, element, cell in
+                cell.bind(element)
+            }
+            .disposed(by: disposeBag)
 
-        allTimePriceLowLabel.text = stockVM.allTimeLowPrice
-        allTimePriceLowDate.text = stockVM.allTimeLowPriceDate
+
+    }
+    // MARK: - Manage Views According to viewState
+    private func bindHiddenShowViewStates() {
+        self.viewModel.viewStates
+            .drive(onNext: {[weak self] state in
+                guard let self = self else {
+                    return
+                }
+                self.configureViewState(state)
+            })
+            .disposed(by: disposeBag)
+    }
+
+    // Using same logic in two screens which can be extracted out in a separate method call
+    private func configureViewState(_ state: StockDetailViewState) {
+        prepareAllViews()
+        if let loadingViewModel = state.getLoadingViewModel() {
+            loadingView.isHidden = false
+            loadingLabel.text = loadingViewModel.message
+        }
+        else if let errorViewModel = state.getErrorViewModel() {
+            errorLabel.isHidden = false
+            errorLabel.text = errorViewModel.message
+        }
+        else if state.getViewModel() != nil {
+            tableView.isHidden = false
+        }
+
+    }
+
+    func prepareAllViews() {
+        tableView.isHidden = true
+        errorLabel.isHidden = true
+        loadingView.isHidden = true
     }
 
     deinit {

@@ -6,13 +6,15 @@
 //
 
 import XCTest
-@testable import FinanceStackApp
 import RxSwift
 import RxCocoa
+@testable import FinanceStackApp
 
 class StockListViewModelTests: XCTestCase {
 
     var disposeBag = DisposeBag()
+    typealias StateListSpy = StateSpy<StockListViewState>
+
     func test_viewModelDoesNotCallAPI_OnInit() {
         let sut = makeSUT()
         XCTAssertTrue(sut.client.messageCount == 0, "StockViewModel should not fetch stocks on init but got \(sut.client.messageCount) instead")
@@ -26,14 +28,14 @@ class StockListViewModelTests: XCTestCase {
 
     func test_viewModelInitialState_isLoading() {
         let sut = makeSUT()
-        let stateSpy = StateSpy(sut.viewModel.viewStates)
+        let stateSpy = StateListSpy(sut.viewModel.viewStates)
 
         XCTAssertEqual(stateSpy.values, [.loading(LoadingViewModel(message: loadingMessage))], "Expected loading state only but got \(stateSpy.values) instead")
     }
 
     func test_viewModelShouldFail_onClientFailure() {
         let sut = makeSUT()
-        let stateSpy = StateSpy(sut.viewModel.viewStates)
+        let stateSpy = StateListSpy(sut.viewModel.viewStates)
 
         sut.viewModel.fetchStockList()
 
@@ -47,7 +49,7 @@ class StockListViewModelTests: XCTestCase {
 
     func test_viewModelShouldSuccess_onClientSuccess() {
         let sut = makeSUT()
-        let stateSpy = StateSpy(sut.viewModel.viewStates)
+        let stateSpy = StateListSpy(sut.viewModel.viewStates)
 
         sut.viewModel.fetchStockList()
         let stockListData = [stockModel, stockModel]
@@ -63,7 +65,7 @@ class StockListViewModelTests: XCTestCase {
 
     func test_viewModelShouldNotFailWhenDataIsPresent_onClientFailure() {
         let sut = makeSUT()
-        let stateSpy = StateSpy(sut.viewModel.viewStates)
+        let stateSpy = StateListSpy(sut.viewModel.viewStates)
 
         sut.viewModel.fetchStockList()
         let stockListData = [stockModel, stockModel]
@@ -81,7 +83,7 @@ class StockListViewModelTests: XCTestCase {
 
     func test_viewModelShouldNotFilterResult_onEmptySearchText() {
         let sut = makeSUT()
-        let stateSpy = StateSpy(sut.viewModel.viewStates)
+        let stateSpy = StateListSpy(sut.viewModel.viewStates)
 
         sut.viewModel.fetchStockList()
         let stockListData = [stockModel, stockModel]
@@ -103,7 +105,7 @@ class StockListViewModelTests: XCTestCase {
             capturedMessage.append(StockQueryStub(stocks: stocks, query: query))
             return stocks
         })
-        let _ = StateSpy(sut.viewModel.viewStates)
+        let _ = StateListSpy(sut.viewModel.viewStates)
 
         sut.viewModel.fetchStockList()
         let stockListData = [stockModel, stockModel]
@@ -139,7 +141,7 @@ class StockListViewModelTests: XCTestCase {
             capturedMessage.append(StockQueryStub(stocks: stocks, query: query))
             return stocks
         })
-        let _ = StateSpy(sut.viewModel.viewStates)
+        let _ = StateListSpy(sut.viewModel.viewStates)
 
         sut.viewModel.fetchStockList()
         let stockListData = [stockModel, stockModel]
@@ -154,14 +156,20 @@ class StockListViewModelTests: XCTestCase {
         query = "ABC"
 
         sut.viewModel.text.accept(query)
-        sut.viewModel.text.accept(query)
-
         let exp = expectation(description: "Text Entry Expectation")
 
         expect(toFullFill: exp, after: throttlingTimeInSeconds) {
             XCTAssertEqual(capturedMessage, [initialStockQueryStub, StockQueryStub(stocks: stockListData, query: query)], "Expected Search Block to be called on entering text but got \(capturedMessage) instead")
+            sut.viewModel.text.accept(query)
         }
         wait(for: [exp], timeout: throttlingTimeInSeconds)
+        let secondExp = expectation(description: "Text Entry Expectation")
+
+        expect(toFullFill: secondExp, after: throttlingTimeInSeconds) {
+            XCTAssertEqual(capturedMessage, [initialStockQueryStub, StockQueryStub(stocks: stockListData, query: query)], "Search Block should not be called on same text search")
+            sut.viewModel.text.accept(query)
+        }
+        wait(for: [secondExp], timeout: throttlingTimeInSeconds)
 
     }
 
@@ -256,17 +264,6 @@ class StockListViewModelTests: XCTestCase {
         return (viewModel: viewModel, client: client)
     }
 
-    private class StateSpy {
-        var values: [StockViewState] = []
-        var disposbag = DisposeBag()
-        init(_ state: Driver<StockViewState>) {
-            state
-                .asObservable()
-                .subscribe (onNext: { state in
-                    self.values.append(state)
-                }).disposed(by: disposbag)
-        }
-    }
 
     private struct StockQueryStub: Equatable {
         let stocks: [StockModel]

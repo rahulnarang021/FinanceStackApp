@@ -15,14 +15,22 @@ class StockListCoordinator: Coordinator {
 
     lazy var childCoordinators: [Coordinator] = []
     var navigationController: UINavigationController
+    let apiManager: APIManagerInput
 
-    init(navigationController: UINavigationController) {
+    init(navigationController: UINavigationController, apiManager: APIManagerInput) {
         self.navigationController = navigationController
+        self.apiManager = apiManager
     }
 
+    private class FakeAPIManager: APIManagerInput {
+        func makeAPICall<T>(apiConfiguration: APIConfiguration, completion: @escaping ((Result<T, APIError>) -> Void)) where T : Decodable {
+
+        }
+
+
+    }
     func start() {
-        let apiManager = APIManager()
-        let client = StockClient(apiManagerInput: apiManager)
+        let client = StockLisAPIClient(apiManagerInput: apiManager)
         let viewModel = StockListViewModel(client: client, delay: apiPeriodicIntervalInSeconds, tapHandler: {[weak self] stockModel in
             self?.pushDetailCoordinator(stockModel: stockModel)
         }, searchHandler: SearchQueryService.search)
@@ -36,6 +44,7 @@ class StockListCoordinator: Coordinator {
 
     func pushDetailCoordinator(stockModel: StockModel) {
         let coordinator = StockDetailCoordinator(stockModel: stockModel,
+                                                 apiManager: apiManager,
                                                  navigationController: navigationController)
         coordinator.start()
         self.childCoordinators.append(coordinator)

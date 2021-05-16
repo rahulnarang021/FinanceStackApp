@@ -8,7 +8,7 @@
 import Foundation
 import RxSwift
 
-class StockClient: StockListClient {
+class StockLisAPIClient: StockListClient {
 
   private let apiManagerInput: APIManagerInput
 

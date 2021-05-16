@@ -18,7 +18,7 @@ class StockListViewController: UIViewController, Storyboardable, Deinitcallable 
     @IBOutlet weak var stockListTableView: UITableView!
 
     var onDeinit: (() -> Void)?
-    var viewModel: StockListViewModel!
+    var viewModel: StockListViewModelProtocol!
 
     let disposeBag = DisposeBag()
 
@@ -41,7 +41,7 @@ class StockListViewController: UIViewController, Storyboardable, Deinitcallable 
     // MARK: - Do TableView Binding
     private func bindTableViewData() {
         viewModel.viewStates
-            .map { $0.getViewModels() }
+            .map { $0.getViewModel() ?? [] }
             .asDriver()
             .drive(stockListTableView.rx.items(cellIdentifier: StockListCell.reusableIdentifier, cellType: StockListCell.self)) {row, element, cell in
                 cell.bind(element)
@@ -67,7 +67,6 @@ class StockListViewController: UIViewController, Storyboardable, Deinitcallable 
     // MARK: - Manage Views According to viewState
     private func bindHiddenShowViewStates() {
         self.viewModel.viewStates
-            .asDriver()
             .drive(onNext: {[weak self] state in
                 guard let self = self else {
                     return
@@ -77,7 +76,7 @@ class StockListViewController: UIViewController, Storyboardable, Deinitcallable 
             .disposed(by: disposeBag)
     }
 
-    private func configureViewState(_ state: StockViewState) {
+    private func configureViewState(_ state: StockListViewState) {
         prepareAllViews()
         if let loadingViewModel = state.getLoadingViewModel() {
             loadingView.isHidden = false
@@ -89,7 +88,7 @@ class StockListViewController: UIViewController, Storyboardable, Deinitcallable 
             searchBarView.isHidden = true
             errorLabel.text = errorViewModel.message
         }
-        else if !state.getViewModels().isEmpty {
+        else if state.getViewModel() != nil {
             stockListTableView.isHidden = false
             searchBarView.isHidden = false
         }

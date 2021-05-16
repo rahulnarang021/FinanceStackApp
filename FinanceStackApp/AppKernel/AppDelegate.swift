@@ -16,8 +16,11 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
   func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
 
+    // Composing Application Here
     let navigationController = UINavigationController()
-    coordinator = StockListCoordinator(navigationController: navigationController)
+    let apiManager = APIManager()
+
+    coordinator = StockListCoordinator(navigationController: navigationController, apiManager: apiManager)
 
     self.window = UIWindow(frame: UIScreen.main.bounds)
     self.window?.rootViewController = navigationController

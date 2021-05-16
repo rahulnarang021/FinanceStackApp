@@ -7,14 +7,6 @@
 
 import Foundation
 
-public struct ErrorViewModel: Equatable {
-    public var message: String
-}
-
-public struct LoadingViewModel: Equatable {
-    public var message: String
-}
-
 public struct StockViewModel: Equatable {
     public var name: String
     public var price: String
@@ -25,7 +17,11 @@ public struct StockViewModel: Equatable {
     public init(_ stockModel: StockModel) {
         self.identifier = stockModel.symbol //temporary and can be changed on the basis of api requirement
         self.shortName = stockModel.shortName
-        self.name = "\(stockModel.symbol) (\(stockModel.exchange))"
+        if let stockName = shortName {
+            self.name = "\(stockName) (\(stockModel.symbol))"
+        } else {
+            self.name = "\(stockModel.symbol) (\(stockModel.exchange))"
+        }
         self.price = stockModel.regularMarketPreviousClose.fmt
         self.market = "\(stockModel.quoteType) - \(stockModel.region)"
     }

@@ -15,7 +15,7 @@ public struct APIError: Error, Equatable {// created custom error object to be p
         message = error?.localizedDescription ?? "Something went wrong"
     }
 
-    init(message: String) {
+    public init(message: String) {
         self.message = message
     }
 }

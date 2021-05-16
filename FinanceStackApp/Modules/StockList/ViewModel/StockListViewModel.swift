@@ -9,17 +9,11 @@ import Foundation
 import RxCocoa
 import RxSwift
 
-public class StockListViewModel {
+
+public class StockListViewModel: StockListViewModelProtocol {
     private var disposeBag = DisposeBag()
     private var client: StockListClient
 
-    private var loadingMessage: String {
-        return "Fetching data"
-    }
-
-    private var errorMessage: String {
-        return "Failed to load data from server"
-    }
 
     private var stockList: PublishRelay<[StockModel]> = PublishRelay<[StockModel]>()
     private var errorViewModel: PublishRelay<ErrorViewModel> = PublishRelay<ErrorViewModel>()
@@ -71,32 +65,32 @@ public class StockListViewModel {
         .disposed(by: disposeBag)
     }
 
-    public var viewStates: Driver<StockViewState> { // Main viewState listened by View to refresh data on screen
+    public var viewStates: Driver<StockListViewState> { // Main viewState listened by View to refresh data on screen
         return Observable.merge(errorState,
                                 searchFilterState,
-                                .just(.loading(LoadingViewModel(message: self.loadingMessage))))
-            .asDriver(onErrorJustReturn: .failure(ErrorViewModel(message: errorMessage)))
+                                .just(.loading(LoadingViewModel(message: StockViewModelConstants.loadingMessage))))
+            .asDriver(onErrorJustReturn: .failure(ErrorViewModel(message:StockViewModelConstants.errorMessage)))
     }
 
-    private var errorState: Observable<StockViewState> {
+    private var errorState: Observable<StockListViewState> {
         errorViewModel
             .asObservable()
             .take(until: stockList)
             .map { error ->
-                StockViewState in
+                StockListViewState in
                 .failure(error)
             }
             .asObservable()
     }
 
-    private var searchFilterState: Observable<StockViewState> {
+    private var searchFilterState: Observable<StockListViewState> {
         Observable.combineLatest(text
                                     .throttle(.milliseconds(200), scheduler: MainScheduler.instance)
                                     .distinctUntilChanged()
                                     .asObservable(),
                                  stockList
                                     .asObservable())
-            .map { [weak self] (text, stockList) -> StockViewState in
+            .map { [weak self] (text, stockList) -> StockListViewState in
 
                 guard let `self` = self else {
                     return .failure(ErrorViewModel(message: ""))
@@ -135,6 +129,6 @@ public class StockListViewModel {
     }
 
     private func updateState(withError error: Error) {
-        self.errorViewModel.accept(ErrorViewModel(message: self.errorMessage))
+        self.errorViewModel.accept(ErrorViewModel(message: StockViewModelConstants.errorMessage))
     }
 }

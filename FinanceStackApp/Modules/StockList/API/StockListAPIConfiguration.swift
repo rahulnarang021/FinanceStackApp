@@ -14,8 +14,8 @@ struct StockListAPIConfiguration: APIConfiguration {
 
   func getHeaders() -> [String : String]? {
     var headers: [String: String] = [:]
-    headers[StockListAPIConstants.rapidAPIKey] = StockListAPIConstants.rapidAPIKeyValue
-    headers[StockListAPIConstants.rapidAPIHost] = StockListAPIConstants.rapidAPIHostValue
+    headers[StockAPIConstants.rapidAPIKey] = StockAPIConstants.rapidAPIKeyValue
+    headers[StockAPIConstants.rapidAPIHost] = StockAPIConstants.rapidAPIHostValue
     return headers
   }
 
@@ -28,7 +28,7 @@ struct StockListAPIConfiguration: APIConfiguration {
   }
 
   func getRequestTimeout() -> TimeInterval {
-    return StockListAPIConstants.rapidAPITimeout
+    return StockAPIConstants.rapidAPITimeout
   }
 
   func getPostParams() -> [String : Any?]? {

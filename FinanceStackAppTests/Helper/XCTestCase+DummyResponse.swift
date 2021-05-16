@@ -57,4 +57,8 @@ extension XCTestCase {
                      previousClose: 4152.1,
                      chartPreviousClose: 4152.1)
     }
+
+    var stockDetailModel: StockDetailModel {
+        return StockDetailModel(summaryProfile: nil, financialData: nil, summaryDetail: nil, price: nil)
+    }
 }

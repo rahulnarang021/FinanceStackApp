@@ -16,17 +16,24 @@ class StockDetailCoordinator: Coordinator {
 
     var navigationController: UINavigationController
     private let stockModel: StockModel
+    private let apiManager: APIManagerInput
 
-    init(stockModel: StockModel, navigationController: UINavigationController) {
+    init(stockModel: StockModel, apiManager: APIManagerInput, navigationController: UINavigationController) {
+        self.apiManager = apiManager
         self.navigationController = navigationController
         self.stockModel = stockModel
     }
 
     func start() {
         let detailVC = StockDetailViewController.instantiate()
-        let viewModel = StockDetailViewModel(stockModel: stockModel)
+        let client = StockDetailAPIClient(apiManager: apiManager)
+        let stockDetailInput = StockDetailInput(shortName: stockModel.shortName,
+                                                symbol: stockModel.symbol,
+                                                region: stockModel.region)
+        let viewModel = StockDetailViewModel(stockModel: stockDetailInput, client: client)
         detailVC.viewModel = viewModel
         setDeallocallable(with: detailVC)
         navigationController.pushViewController(detailVC, animated: true)
     }
 }
+

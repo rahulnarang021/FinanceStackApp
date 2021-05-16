@@ -6,19 +6,35 @@
 //
 
 import Foundation
-public enum StockViewState: Equatable {
+public enum StockViewState<T: Equatable>: Equatable {
     case loading(LoadingViewModel)
-    case success([StockViewModel])
+    case success(T)
     case failure(ErrorViewModel)
 }
 
+public struct ErrorViewModel: Equatable {
+    public var message: String
+    public init(message: String) {
+        self.message = message
+    }
+}
+
+public struct LoadingViewModel: Equatable {
+    public var message: String
+
+    public init(message: String) {
+        self.message = message
+    }
+}
+
+
 public extension StockViewState {
-    func getViewModels() -> [StockViewModel] {
+    func getViewModel() -> T? {
         switch self {
-        case let .success(stockList):
-            return stockList
+        case let .success(response):
+            return response
         default:
-            return []
+            return nil
         }
     }
 

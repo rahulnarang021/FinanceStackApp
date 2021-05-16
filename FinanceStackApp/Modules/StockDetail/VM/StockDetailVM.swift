@@ -6,71 +6,56 @@
 //
 
 import Foundation
-struct StockDetailVM {
-    private let stockModel: StockModel
+public struct StockDetailVM: Equatable { // Created VM to show raw stock data on screen should be changed on the basis of business requirements
+    private var stockDetailModel: StockDetailModel
 
-    init(stockModel: StockModel) {
-        self.stockModel = stockModel
-    }
+    public var summaryList: [StockDetailListVM] = []
+    public init(stockDetailModel: StockDetailModel) {
+        self.stockDetailModel = stockDetailModel
 
-    var stockName: String {
-        if let shortName = stockModel.shortName, !shortName.isEmpty {
-            return shortName
+        var list: [StockDetailListVM] = [] // all text should be in localizable file in a realtime project
+        if let summaryProfile = stockDetailModel.summaryProfile {
+            list.append(contentsOf: summaryProfile.getListVM())
         }
-        return stockModel.symbol
-    }
 
-    var notAvailable: String {
-        return "N/A"
-    }
-
-    var exchangeName: String {
-        return stockModel.fullExchangeName
-    }
-
-    var marketName: String {
-        return stockModel.market
-    }
-
-    var priceValue: String {
-        return CurrencyFormattingHelper.shared.formatCurrency(stockModel.regularMarketPreviousClose.raw)
-    }
-    var allTimeHighPrice: String {
-        if let maxPrice = stockModel.spark.close?.maxElement() {
-            return CurrencyFormattingHelper.shared.formatCurrency(maxPrice)
+        if let financialData = stockDetailModel.financialData {
+            list.append(contentsOf: financialData.getListVM())
         }
-        return notAvailable
-    }
 
-    var allTimeHighPriceDate: String {
-        if let priceArray = stockModel.spark.close, let priceValue = priceArray.maxElement() {
-            if let index = priceArray.firstIndex(of: priceValue), let timestamp = stockModel.spark.timestamp?[index] {
-                let date = Date(timeIntervalSince1970: timestamp)
-                return "\(DateFormattingHelper.shared.formattedDate(date))"
-            }
+        if let summaryDetail = stockDetailModel.summaryDetail {
+            list.append(contentsOf: summaryDetail.getListVM())
         }
-        return notAvailable
-    }
 
-    var allTimeLowPrice: String {
-        if let minPrice = stockModel.spark.close?.minElement() {
-            return CurrencyFormattingHelper.shared.formatCurrency(minPrice)
+        if let price = stockDetailModel.price {
+            list.append(contentsOf: price.getListVM())
         }
-        return notAvailable
-    }
 
-    var allTimeLowPriceDate: String {
-        if let priceArray = stockModel.spark.close, let priceValue = priceArray.minElement() {
-            if let index = priceArray.firstIndex(of: priceValue), let timestamp = stockModel.spark.timestamp?[index] {
-                let date = Date(timeIntervalSince1970: timestamp)
-                return "\(DateFormattingHelper.shared.formattedDate(date))"
-            }
-        }
-        return notAvailable
-    }
-
-    var marketTime: String {
-        return stockModel.regularMarketTime.fmt
+        self.summaryList = list
     }
 }
 
+
+public struct StockDetailListVM: Equatable {
+    public let title: String
+    public let value: String
+
+    public init(title: String, value: String?) {
+        self.title = title
+        self.value = value ?? "N/A"
+    }
+
+    public init(title: String, data: GenericData?) {
+        self.title = title
+        guard let data = data else {
+            self.value = "N/A"
+            return
+        }
+        if let formattedValue = data.fmt {
+            self.value = formattedValue
+        } else if let rawValue = data.raw {
+            self.value = "\(rawValue)"
+        } else {
+            self.value = "N/A"
+        }
+    }
+}
