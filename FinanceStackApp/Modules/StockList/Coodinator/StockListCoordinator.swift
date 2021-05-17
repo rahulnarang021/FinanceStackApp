@@ -22,13 +22,6 @@ class StockListCoordinator: Coordinator {
         self.apiManager = apiManager
     }
 
-    private class FakeAPIManager: APIManagerInput {
-        func makeAPICall<T>(apiConfiguration: APIConfiguration, completion: @escaping ((Result<T, APIError>) -> Void)) where T : Decodable {
-
-        }
-
-
-    }
     func start() {
         let client = StockLisAPIClient(apiManagerInput: apiManager)
         let viewModel = StockListViewModel(client: client, delay: apiPeriodicIntervalInSeconds, tapHandler: {[weak self] stockModel in
